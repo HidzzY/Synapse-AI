@@ -41,16 +41,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
         let sessionsData = {};
         let isAwaitingResponse = false;
-        let regionContext = ""; // Menyimpan data dari JSON
+        let regionContext = "";
 
-        // Fungsi memuat data wilayah untuk diberikan ke AI
         const loadRegionData = async () => {
             try {
                 const res = await fetch(REGION_DATA_URL);
                 const data = await res.json();
                 regionContext = data.daftar_wilayah.map(w => `${w.nama}: ${w.kode}`).join(', ');
                 
-                // Update system prompt di sesi aktif setelah data dimuat
                 if (sessionsData.activeSessionId && sessionsData.sessions[sessionsData.activeSessionId]) {
                     sessionsData.sessions[sessionsData.activeSessionId][0] = getSystemPrompt();
                 }
@@ -181,12 +179,9 @@ Gaya Bahasa: Santai, gunakan "gw", "lu", "bre". Jangan terlalu kaku.`
     if (message.role === 'user') {
         contentDiv.textContent = message.content;
     } else {
-        // PERBAIKAN DI SINI:
-        // Cek apakah isi pesan adalah UI Cuaca (mengandung tag HTML)
         if (message.content.trim().startsWith('<div')) {
             contentDiv.innerHTML = message.content;
         } else {
-            // Jika pesan teks biasa, gunakan markdown
             contentDiv.innerHTML = typeof marked !== 'undefined' ? marked.parse(message.content) : message.content;
         }
         enhanceCodeBlocks(contentDiv);
@@ -271,7 +266,6 @@ Gaya Bahasa: Santai, gunakan "gw", "lu", "bre". Jangan terlalu kaku.`
                 // DETEKSI LOGIKA EXECUTION
                 if (aiFullText.toLowerCase().includes("/exec") || aiFullText.toLowerCase().includes("weather:")) {
                     let finalOutput = "";
-                    // Bersihkan teks dari format instruksi agar tidak muncul ke user
                     let cleanText = aiFullText.split(/\/exec/i)[0].replace(/\[EXEC\]/gi, '').split("weather:")[0].trim();
 
                     if (aiFullText.includes("ephoto360:")) {
@@ -341,14 +335,10 @@ Gaya Bahasa: Santai, gunakan "gw", "lu", "bre". Jangan terlalu kaku.`
                         }
                     }
                     else if (aiFullText.includes("weather:")) {
-    // 1. Ambil teks setelah "weather:"
     let rawCode = aiFullText.split("weather:")[1].trim();
     
-    // 2. Bersihkan karakter pengganggu TAPI biarkan titik tetap ada
-    // Kita hanya hapus tanda tanya, seru, dan baris baru.
     const adm4 = rawCode.replace(/[?!\n]/g, '').split(' ')[0];
 
-    // Debugging: Cek di console apakah URL sudah benar ada titiknya
     console.log("Fetching URL:", `${WEATHER_API}?adm4=${adm4}`);
 
     try {
@@ -449,7 +439,6 @@ Gaya Bahasa: Santai, gunakan "gw", "lu", "bre". Jangan terlalu kaku.`
             sidebarOverlay.classList.remove('open'); 
         };
 
-        // Inisialisasi data wilayah dulu, baru load session
         loadRegionData().then(() => loadSessions());
     }
 });
