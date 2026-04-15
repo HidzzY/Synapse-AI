@@ -1,0 +1,38 @@
+{
+  "daftar_wilayah": [
+    { "nama": "Parung, Parung, Kab. Bogor", "kode": "32.01.10.2001" },
+    { "nama": "Waru, Parung, Kab. Bogor", "kode": "32.01.10.2002" },
+    { "nama": "Bojong Indah, Parung, Kab. Bogor", "kode": "32.01.10.2003" },
+    { "nama": "Cogreg, Parung, Kab. Bogor", "kode": "32.01.10.2004" },
+    { "nama": "Jabon Mekar, Parung, Kab. Bogor", "kode": "32.01.10.2005" },
+    { "nama": "Pemagarsari, Parung, Kab. Bogor", "kode": "32.01.10.2006" },
+    { "nama": "Warujaya, Parung, Kab. Bogor", "kode": "32.01.10.2007" },
+    { "nama": "Iwul, Parung, Kab. Bogor", "kode": "32.01.10.2008" },
+    { "nama": "Curug, Parung, Kab. Bogor", "kode": "32.01.10.2009" },
+
+    { "nama": "Gambir, Jakarta Pusat", "kode": "31.71.01.1001" },
+    { "nama": "Selong, Jakarta Selatan", "kode": "31.74.01.1001" },
+    { "nama": "Pinangsia, Jakarta Barat", "kode": "31.73.01.1001" },
+    { "nama": "Kali Baru, Jakarta Utara", "kode": "31.72.01.1001" },
+    { "nama": "Pisangan Baru, Jakarta Timur", "kode": "31.75.01.1001" },
+    { "nama": "Batutulis, Kota Bogor", "kode": "32.71.01.1001" },
+    { "nama": "Depok, Kota Depok", "kode": "32.76.01.1001" },
+    { "nama": "Sukasari, Kota Tangerang", "kode": "36.71.01.1001" },
+    { "nama": "Aren Jaya, Kota Bekasi", "kode": "32.75.01.1001" },
+    { "nama": "Campaka, Kota Bandung", "kode": "32.73.01.1001" },
+    { "nama": "Semarang Barat (Sampel), Kota Semarang", "kode": "33.74.01.1001" },
+    { "nama": "Sosromenduran, Kota Yogyakarta", "kode": "34.71.01.1001" },
+    { "nama": "Krembangan Selatan, Kota Surabaya", "kode": "35.78.01.1001" },
+    { "nama": "Klojen, Kota Malang", "kode": "35.73.01.1001" },
+    { "nama": "Dangin Puri, Kota Denpasar", "kode": "51.71.01.1001" },
+    { "nama": "Medan Kota (Sampel), Kota Medan", "kode": "12.71.01.1001" },
+    { "nama": "17 Ilir, Kota Palembang", "kode": "16.71.01.1001" },
+    { "nama": "Losari, Kota Makassar", "kode": "73.71.01.1001" },
+    { "nama": "Prapatan, Kota Balikpapan", "kode": "64.71.01.1001" },
+    { "nama": "Banjarmasin Selatan (Sampel), Kota Banjarmasin", "kode": "63.71.01.1001" },
+    { "nama": "Mariana, Kota Pontianak", "kode": "61.71.01.1001" },
+    { "nama": "Samarinda Seberang (Sampel), Kota Samarinda", "kode": "64.72.01.1001" },
+    { "nama": "Pinaesaan, Kota Manado", "kode": "71.71.01.1001" },
+    { "nama": "Gurabesi, Kota Jayapura", "kode": "91.71.01.1001" }
+  ]
+}

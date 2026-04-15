@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chat - Synapse Veda</title>
+    <link rel="stylesheet" href="../style/style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/tomorrow-night-blue.min.css">
+</head>
+<body>
+    <div id="app-wrapper">
+        <aside id="sidebar">
+            <div class="sidebar-header">
+                <button id="new-chat-btn" class="sidebar-new-chat-btn">
+                    <i class="fa-solid fa-plus"></i> New Chat
+                </button>
+            </div>
+            <nav id="session-list" class="session-list"></nav>
+        </aside>
+
+        <div id="chat-main-content">
+            <div class="chat-layout">
+                <header class="chat-header">
+                    <div class="header-left">
+    <button id="menu-toggle-btn" class="header-button" title="Menu"><i class="fa-solid fa-bars"></i></button>
+    <img src="../image/logo2.png" alt="Icon" class="header-logo"> 
+    <h2 id="chat-title">Synapse Veda</h2>
+</div>
+
+                    <div class="header-right">
+                        <div class="theme-switcher">
+                            <i class="fa-solid fa-sun"></i>
+                            <label class="switch">
+                                <input type="checkbox" id="theme-toggle">
+                                <span class="slider round"></span>
+                            </label>
+                            <i class="fa-solid fa-moon"></i>
+                        </div>
+                    </div>
+                </header>
+
+                <main id="chat-container" class="chat-container">
+                    <div id="chat-messages" class="chat-messages"></div>
+                </main>
+
+                <footer class="chat-input-area-wrapper">
+                    <div class="chat-input-area">
+                        <textarea id="message-input" placeholder="Ketik pesan Anda di sini..." rows="1"></textarea>
+                        <button id="send-button" title="Kirim Pesan"><i class="fa-solid fa-paper-plane"></i></button>
+                    </div>
+                    <p class="api-disclaimer" >Synapse adalah AI dan dapat melakukan kesalahan.</p>
+                </footer>
+            </div>
+        </div>
+    </div>
+
+    <div id="sidebar-overlay"></div>
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/marked/12.0.2/marked.min.js" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js" defer></script>
+    <script src="../js/script.js"></script>
+</body>
+</html>
