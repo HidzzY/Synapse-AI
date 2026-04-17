@@ -26,7 +26,8 @@ document.addEventListener('DOMContentLoaded', () => {
         const SSWEB_API = 'https://api.siputzx.my.id/api/tools/ssweb';
         const GEMPA_API = 'https://api.siputzx.my.id/api/info/bmkg'; 
         const WEATHER_API = 'https://api.bmkg.go.id/publik/prakiraan-cuaca';
-        const REGION_DATA_URL = '../js/CodeDaerah.json'; // URL file JSON baru
+        const BRAT_API = 'https://ikyyzyyrestapi.my.id/maker/bratbahlil'; // API BRAT BARU
+        const REGION_DATA_URL = '../js/CodeDaerah.json'; 
 
         const chatContainer = document.getElementById('chat-container');
         const chatMessages = document.getElementById('chat-messages');
@@ -73,15 +74,16 @@ Jika user meminta fitur ini, kamu WAJIB menjawab HANYA dengan format /exec diiku
 5. Screenshot: /exec ssweb: [URL]
 6. Gempa: /exec gempa:bmkg
 7. Cuaca: /exec weather: [KODE_ADM4]
+8. Brat: /exec brat: [TEKS]
 
 [Referensi Kode Wilayah (Nama: Kode)]
 ${regionContext || "Data wilayah sedang dimuat..."}
 
 [Prosedur Cuaca]
-1. Jika user tanya cuaca di lokasi yang ada di daftar referensi (meskipun user hanya menyebut nama Desa/Kelurahannya saja), cari kode ADM4 yang sesuai.
-2. WAJIB balas HANYA dengan format: /exec weather: [KODE] (Contoh: /exec weather: 32.01.10.2004).
-3. Gunakan titik pada kode wilayah sesuai referensi. Jangan hapus titiknya.
-4. Jika lokasi TIDAK ada di daftar, minta maaf dengan santai dan tanya lokasinya di mana.
+1. Jika user tanya cuaca di lokasi yang ada di daftar referensi, cari kode ADM4 yang sesuai.
+2. WAJIB balas HANYA dengan format: /exec weather: [KODE].
+3. Gunakan titik pada kode wilayah sesuai referensi.
+4. Jika lokasi TIDAK ada di daftar, minta maaf dengan santai.
 
 [Kepribadian]
 Gaya Bahasa: Santai, gunakan "gw", "lu", "bre". Jangan terlalu kaku.`
@@ -279,6 +281,11 @@ Gaya Bahasa: Santai, gunakan "gw", "lu", "bre". Jangan terlalu kaku.`
                         const img = `${GPT_IMAGE_API}?text=${encodeURIComponent(prompt)}`;
                         finalOutput = `${cleanText ? cleanText + '<br><br>' : ''}<img src="${img}" style="width:100%; border-radius:10px; border:2px solid var(--accent-color);" onerror="this.src='https://via.placeholder.com/400?text=Gagal+Membuat+Gambar'">`;
                     }
+                    else if (aiFullText.includes("brat:")) { // LOGIKA BRAT BARU
+                        const teksBrat = aiFullText.split("brat:")[1].trim().split('\n')[0];
+                        const imgBrat = `${BRAT_API}?text=${encodeURIComponent(teksBrat)}`;
+                        finalOutput = `${cleanText ? cleanText + '<br><br>' : ''}<img src="${imgBrat}" style="max-width:300px; width:100%; border-radius:10px; border:2px solid var(--accent-color);">`;
+                    }
                     else if (aiFullText.includes("news:google")) {
                         const nRes = await fetch(NEWS_API);
                         const nData = await nRes.json();
@@ -335,67 +342,35 @@ Gaya Bahasa: Santai, gunakan "gw", "lu", "bre". Jangan terlalu kaku.`
                         }
                     }
                     else if (aiFullText.includes("weather:")) {
-    let rawCode = aiFullText.split("weather:")[1].trim();
-    
-    const adm4 = rawCode.replace(/[?!\n]/g, '').split(' ')[0];
-
-    console.log("Fetching URL:", `${WEATHER_API}?adm4=${adm4}`);
-
-    try {
-        const wRes = await fetch(`${WEATHER_API}?adm4=${adm4}`);
-        
-        if (!wRes.ok) throw new Error(`BMKG Error: ${wRes.status}`);
-
-        const wData = await wRes.json();
-        
-        if (wData.data && wData.data.length > 0) {
-            const location = wData.data[0].lokasi;
-            const cur = wData.data[0].cuaca[0][0];
-            const weatherIcon = cur.image; 
-            
-            const prefixText = typeof cleanText !== 'undefined' ? cleanText : '';
-
-            finalOutput = `
-            ${prefixText ? prefixText + '<br><br>' : ''}
-            <div style="background:linear-gradient(135deg, #1e1e2f, #111); padding:20px; border-radius:15px; border:1px solid var(--accent-color); color:white;">
-                <div style="display:flex; justify-content:space-between; align-items:flex-start;">
-                    <div>
-                        <div style="font-size:1.1em; font-weight:bold; color:var(--accent-color);"><i class="fa-solid fa-location-dot"></i> ${location.desa}</div>
-                        <div style="font-size:0.8em; opacity:0.8;">${location.kecamatan}, ${location.kotkab}</div>
-                    </div>
-                </div>
-
-                <div style="display:flex; align-items:center; margin:15px 0;">
-                    <img src="${weatherIcon}" style="width:70px; height:70px;">
-                    <div style="margin-left:15px;">
-                        <div style="font-size:3em; font-weight:bold; line-height:1;">${cur.t}°C</div>
-                        <div style="font-size:1em; font-weight:500; color:var(--accent-color);">${cur.weather_desc}</div>
-                    </div>
-                </div>
-
-                <div style="display:grid; grid-template-columns: repeat(3, 1fr); gap:10px; border-top: 1px solid rgba(255,255,255,0.1); padding-top:15px;">
-                    <div style="text-align:center;">
-                        <div style="font-size:0.7em; opacity:0.6;">Lembap</div>
-                        <div style="font-size:0.9em; font-weight:bold;">${cur.hu}%</div>
-                    </div>
-                    <div style="text-align:center;">
-                        <div style="font-size:0.7em; opacity:0.6;">Angin</div>
-                        <div style="font-size:0.9em; font-weight:bold;">${cur.ws} <small>km/j</small></div>
-                    </div>
-                    <div style="text-align:center;">
-                        <div style="font-size:0.7em; opacity:0.6;">Awan</div>
-                        <div style="font-size:0.9em; font-weight:bold;">${cur.tcc}%</div>
-                    </div>
-                </div>
-            </div>`;
-        } else {
-            finalOutput = "Data tidak ditemukan untuk kode: " + adm4;
-        }
-    } catch (err) {
-        console.error("Fetch Error:", err);
-        finalOutput = "Gagal mengambil data cuaca. Pastikan koneksi aman, Bre.";
-    }
-}
+                        let rawCode = aiFullText.split("weather:")[1].trim();
+                        const adm4 = rawCode.replace(/[?!\n]/g, '').split(' ')[0];
+                        try {
+                            const wRes = await fetch(`${WEATHER_API}?adm4=${adm4}`);
+                            if (!wRes.ok) throw new Error(`BMKG Error: ${wRes.status}`);
+                            const wData = await wRes.json();
+                            if (wData.data && wData.data.length > 0) {
+                                const location = wData.data[0].lokasi;
+                                const cur = wData.data[0].cuaca[0][0];
+                                const weatherIcon = cur.image; 
+                                finalOutput = `${cleanText ? cleanText + '<br><br>' : ''}
+                                <div style="background:linear-gradient(135deg, #1e1e2f, #111); padding:20px; border-radius:15px; border:1px solid var(--accent-color); color:white;">
+                                    <div style="font-size:1.1em; font-weight:bold; color:var(--accent-color);"><i class="fa-solid fa-location-dot"></i> ${location.desa}</div>
+                                    <div style="display:flex; align-items:center; margin:15px 0;">
+                                        <img src="${weatherIcon}" style="width:70px; height:70px;">
+                                        <div style="margin-left:15px;">
+                                            <div style="font-size:3em; font-weight:bold; line-height:1;">${cur.t}°C</div>
+                                            <div style="font-size:1em; font-weight:500; color:var(--accent-color);">${cur.weather_desc}</div>
+                                        </div>
+                                    </div>
+                                    <div style="display:grid; grid-template-columns: repeat(3, 1fr); gap:10px; border-top: 1px solid rgba(255,255,255,0.1); padding-top:15px;">
+                                        <div style="text-align:center;"><div style="font-size:0.7em; opacity:0.6;">Lembap</div><div>${cur.hu}%</div></div>
+                                        <div style="text-align:center;"><div style="font-size:0.7em; opacity:0.6;">Angin</div><div>${cur.ws} km/j</div></div>
+                                        <div style="text-align:center;"><div style="font-size:0.7em; opacity:0.6;">Awan</div><div>${cur.tcc}%</div></div>
+                                    </div>
+                                </div>`;
+                            }
+                        } catch (err) { finalOutput = "Gagal mengambil data cuaca."; }
+                    }
 
                     const messageDiv = appendMessage({ role: 'assistant', content: '' });
                     messageDiv.innerHTML = finalOutput || aiFullText;
