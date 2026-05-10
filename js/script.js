@@ -28,7 +28,7 @@ document.addEventListener('DOMContentLoaded', () => {
         };
         const PHOTO_API_ENDPOINT = 'https://api.siputzx.my.id/api/m/ephoto360';
         const GPT_IMAGE_API = 'https://photiu.ai/api/txt2img';
-        const NEWS_API = 'https://ikyyzyyrestapi.my.id/berita/google-news';
+        const NEWS_API = 'https://api.ikyyxd.my.id/berita/google-news';
         const SSWEB_API = 'https://api.siputzx.my.id/api/tools/ssweb';
         const GEMPA_API = 'https://api.siputzx.my.id/api/info/bmkg'; 
         const WEATHER_API = 'https://api.bmkg.go.id/publik/prakiraan-cuaca';
