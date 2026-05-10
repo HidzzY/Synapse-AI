@@ -171,18 +171,10 @@
 
         removePreview.onclick = clearPreview;
 
-        // Script tambahan agar data gambar ikut terkirim ke script.js
+        // Pemicu handleSendMessage yang ada di script.js
         sendBtn.addEventListener('click', () => {
-            const file = fileInput.files[0];
-            const text = messageInput.value.trim();
-
-            if (file || text) {
-                // Fungsi di bawah ini harus sesuai dengan logic di script.js kamu
-                // Biasanya memanggil function sendMessage(text, file)
-                if (typeof sendMessage === "function") {
-                    sendMessage(text, file);
-                    clearPreview();
-                }
+            if (typeof handleSendMessage === "function") {
+                handleSendMessage();
             }
         });
     </script>
