@@ -13,7 +13,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/tomorrow-night-blue.min.css">
     <style>
-        /* Tambahan style dikit biar rapi buat preview gambar */
+        /* Tambahan style biar rapi buat preview gambar */
         .image-preview-container {
             display: none;
             padding: 10px;
@@ -141,12 +141,13 @@
     <script src="../js/script.js"></script>
 
     <script>
-        // Logic simpel buat handle preview di UI
         const fileInput = document.getElementById('file-input');
         const attachBtn = document.getElementById('attach-button');
         const previewArea = document.getElementById('preview-area');
         const imagePreview = document.getElementById('image-preview');
         const removePreview = document.getElementById('remove-preview');
+        const sendBtn = document.getElementById('send-button');
+        const messageInput = document.getElementById('message-input');
 
         attachBtn.onclick = () => fileInput.click();
 
@@ -162,11 +163,28 @@
             }
         };
 
-        removePreview.onclick = () => {
+        function clearPreview() {
             fileInput.value = "";
             previewArea.style.display = 'none';
             imagePreview.src = "";
-        };
+        }
+
+        removePreview.onclick = clearPreview;
+
+        // Script tambahan agar data gambar ikut terkirim ke script.js
+        sendBtn.addEventListener('click', () => {
+            const file = fileInput.files[0];
+            const text = messageInput.value.trim();
+
+            if (file || text) {
+                // Fungsi di bawah ini harus sesuai dengan logic di script.js kamu
+                // Biasanya memanggil function sendMessage(text, file)
+                if (typeof sendMessage === "function") {
+                    sendMessage(text, file);
+                    clearPreview();
+                }
+            }
+        });
     </script>
 </body>
 </html>
