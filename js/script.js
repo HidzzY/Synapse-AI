@@ -21,10 +21,10 @@ document.addEventListener('DOMContentLoaded', () => {
         const SESSION_LIMIT = 10000;
         const API_ENDPOINT = 'https://api.siputzx.my.id/api/ai/glm47flash';
         const AI_ENDPOINTS = {
-        synapse: 'https://api.siputzx.my.id/api/ai/glm47flash',
-        chatgpt: 'https://api.ikyyxd.my.id/ai/chatgpt',
-        cici: 'https://api.ikyyxd.my.id/ai/cici',
-        gemini: 'https://api.ikyyxd.my.id/ai/gemini'
+            synapse: 'https://api.siputzx.my.id/api/ai/glm47flash',
+            chatgpt: 'https://api.ikyyxd.my.id/ai/chatgpt',
+            cici: 'https://api.ikyyxd.my.id/ai/cici',
+            gemini: 'https://api.ikyyxd.my.id/ai/gemini'
         };
         const PHOTO_API_ENDPOINT = 'https://api.siputzx.my.id/api/m/ephoto360';
         const GPT_IMAGE_API = 'https://photiu.ai/api/txt2img';
@@ -32,7 +32,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const SSWEB_API = 'https://api.siputzx.my.id/api/tools/ssweb';
         const GEMPA_API = 'https://api.siputzx.my.id/api/info/bmkg'; 
         const WEATHER_API = 'https://api.bmkg.go.id/publik/prakiraan-cuaca';
-        const BRAT_API = 'https://ikyyzyyrestapi.my.id/maker/bratbahlil'; // API BRAT BARU
+        const BRAT_API = 'https://api.ikyyxd.my.id/canvas/bratv1'; // API BRAT TERBARU
         const REGION_DATA_URL = '../js/CodeDaerah.json'; 
 
         const chatContainer = document.getElementById('chat-container');
@@ -66,8 +66,8 @@ document.addEventListener('DOMContentLoaded', () => {
         };
 
         const getSystemPrompt = () => ({ 
-    role: 'system', 
-    content: `Anda adalah Synapse Veda, asisten AI canggih dikembangkan oleh HidzzY (Wahid).
+            role: 'system', 
+            content: `Anda adalah Synapse Veda, asisten AI canggih dikembangkan oleh HidzzY (Wahid).
 
 [Tujuan Utama]
 Berikan informasi akurat dan cepat. Selalu gunakan data terbaru.
@@ -100,7 +100,7 @@ Gaya Bahasa: Santai, gunakan "gw", "lu", "bre". Jangan terlalu kaku.
 2. Jangan gunakan bahasa Inggris kecuali user secara eksplisit meminta bahasa Inggris, translate, atau istilah teknis tertentu.
 3. Jika user menggunakan bahasa campuran, tetap prioritaskan Bahasa Indonesia.
 4. Gunakan bahasa yang natural, santai, mudah dipahami, dan tidak terlalu formal.`
-});
+        });
 
         const saveSessions = () => localStorage.setItem('synapseVedaSessions', JSON.stringify(sessionsData));
 
@@ -183,30 +183,30 @@ Gaya Bahasa: Santai, gunakan "gw", "lu", "bre". Jangan terlalu kaku.
         };
 
         const appendMessage = (message) => {
-    if (message.role === 'system') return;
-    
-    const messageWrapper = document.createElement('div');
-    messageWrapper.className = `message ${message.role}`;
-    
-    const contentDiv = document.createElement('div');
-    contentDiv.className = 'message-content';
-    
-    if (message.role === 'user') {
-        contentDiv.textContent = message.content;
-    } else {
-        if (message.content.trim().startsWith('<div')) {
-            contentDiv.innerHTML = message.content;
-        } else {
-            contentDiv.innerHTML = typeof marked !== 'undefined' ? marked.parse(message.content) : message.content;
-        }
-        enhanceCodeBlocks(contentDiv);
-    }
-    
-    messageWrapper.appendChild(contentDiv);
-    chatMessages.appendChild(messageWrapper);
-    scrollToBottom();
-    return contentDiv;
-};
+            if (message.role === 'system') return;
+            
+            const messageWrapper = document.createElement('div');
+            messageWrapper.className = `message ${message.role}`;
+            
+            const contentDiv = document.createElement('div');
+            contentDiv.className = 'message-content';
+            
+            if (message.role === 'user') {
+                contentDiv.textContent = message.content;
+            } else {
+                if (message.content.trim().startsWith('<div')) {
+                    contentDiv.innerHTML = message.content;
+                } else {
+                    contentDiv.innerHTML = typeof marked !== 'undefined' ? marked.parse(message.content) : message.content;
+                }
+                enhanceCodeBlocks(contentDiv);
+            }
+            
+            messageWrapper.appendChild(contentDiv);
+            chatMessages.appendChild(messageWrapper);
+            scrollToBottom();
+            return contentDiv;
+        };
 
         const renderSessionList = () => {
             sessionList.innerHTML = '';
@@ -314,9 +314,10 @@ Gaya Bahasa: Santai, gunakan "gw", "lu", "bre". Jangan terlalu kaku.
                         const img = `${GPT_IMAGE_API}?text=${encodeURIComponent(prompt)}`;
                         finalOutput = `${cleanText ? cleanText + '<br><br>' : ''}<img src="${img}" style="width:100%; border-radius:10px; border:2px solid var(--accent-color);" onerror="this.src='https://via.placeholder.com/400?text=Gagal+Membuat+Gambar'">`;
                     }
-                    else if (aiFullText.includes("brat:")) { // LOGIKA BRAT BARU
+                    else if (aiFullText.includes("brat:")) { 
+                        // LOGIKA BRAT BARU DENGAN APIKEY kyzz
                         const teksBrat = aiFullText.split("brat:")[1].trim().split('\n')[0];
-                        const imgBrat = `${BRAT_API}?text=${encodeURIComponent(teksBrat)}`;
+                        const imgBrat = `${BRAT_API}?apikey=kyzz&text=${encodeURIComponent(teksBrat)}`;
                         finalOutput = `${cleanText ? cleanText + '<br><br>' : ''}<img src="${imgBrat}" style="max-width:300px; width:100%; border-radius:10px; border:2px solid var(--accent-color);">`;
                     }
                     else if (aiFullText.includes("news:google")) {
