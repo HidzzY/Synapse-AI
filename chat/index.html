@@ -12,6 +12,57 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/tomorrow-night-blue.min.css">
+    <style>
+        /* Tambahan style dikit biar rapi buat preview gambar */
+        .image-preview-container {
+            display: none;
+            padding: 10px;
+            background: var(--bg-secondary);
+            border-top: 1px solid var(--border-color);
+            position: relative;
+        }
+        .preview-wrapper {
+            position: relative;
+            display: inline-block;
+        }
+        #image-preview {
+            max-width: 80px;
+            max-height: 80px;
+            border-radius: 8px;
+            border: 2px solid var(--accent-color);
+        }
+        #remove-preview {
+            position: absolute;
+            top: -8px;
+            right: -8px;
+            background: #ff4d4d;
+            color: white;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            font-size: 12px;
+            border: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .upload-btn {
+            background: none;
+            border: none;
+            color: var(--text-secondary);
+            font-size: 1.2rem;
+            cursor: pointer;
+            padding: 0 10px;
+            transition: color 0.3s;
+        }
+        .upload-btn:hover {
+            color: var(--accent-color);
+        }
+        #file-input {
+            display: none;
+        }
+    </style>
 </head>
 <body>
     <div id="app-wrapper">
@@ -36,8 +87,6 @@
                     </div>
 
                     <div class="header-right">
-
-                        <!-- AI MODEL SELECTOR -->
                         <select id="ai-selector" style="padding:8px 12px;border-radius:8px;border:none;outline:none;background:#222;color:white;margin-right:15px;">
                             <option value="synapse">Synapse Default</option>
                             <option value="chatgpt">ChatGPT</option>
@@ -61,8 +110,20 @@
                 </main>
 
                 <footer class="chat-input-area-wrapper">
+                    <div id="preview-area" class="image-preview-container">
+                        <div class="preview-wrapper">
+                            <img id="image-preview" src="" alt="Preview">
+                            <button id="remove-preview"><i class="fa-solid fa-xmark"></i></button>
+                        </div>
+                    </div>
+
                     <div class="chat-input-area">
-                        <textarea id="message-input" placeholder="Ketik pesan Anda di sini..." rows="1"></textarea>
+                        <input type="file" id="file-input" accept="image/*">
+                        <button type="button" class="upload-btn" id="attach-button" title="Upload Gambar">
+                            <i class="fa-solid fa-paperclip"></i>
+                        </button>
+
+                        <textarea id="message-input" placeholder="Ketik pesan atau caption upscale..." rows="1"></textarea>
                         <button id="send-button" title="Kirim Pesan">
                             <i class="fa-solid fa-paper-plane"></i>
                         </button>
@@ -78,5 +139,34 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/marked/12.0.2/marked.min.js" defer></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js" defer></script>
     <script src="../js/script.js"></script>
+
+    <script>
+        // Logic simpel buat handle preview di UI
+        const fileInput = document.getElementById('file-input');
+        const attachBtn = document.getElementById('attach-button');
+        const previewArea = document.getElementById('preview-area');
+        const imagePreview = document.getElementById('image-preview');
+        const removePreview = document.getElementById('remove-preview');
+
+        attachBtn.onclick = () => fileInput.click();
+
+        fileInput.onchange = () => {
+            const file = fileInput.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    imagePreview.src = e.target.result;
+                    previewArea.style.display = 'block';
+                }
+                reader.readAsDataURL(file);
+            }
+        };
+
+        removePreview.onclick = () => {
+            fileInput.value = "";
+            previewArea.style.display = 'none';
+            imagePreview.src = "";
+        };
+    </script>
 </body>
 </html>
