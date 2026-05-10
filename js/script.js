@@ -20,6 +20,12 @@ document.addEventListener('DOMContentLoaded', () => {
     if (document.getElementById('app-wrapper')) {
         const SESSION_LIMIT = 10000;
         const API_ENDPOINT = 'https://api.siputzx.my.id/api/ai/glm47flash';
+        const AI_ENDPOINTS = {
+        synapse: 'https://api.siputzx.my.id/api/ai/glm47flash',
+        chatgpt: 'https://api.ikyyxd.my.id/ai/chatgpt',
+        cici: 'https://api.ikyyxd.my.id/ai/cici',
+        gemini: 'https://api.ikyyxd.my.id/ai/gemini'
+        };
         const PHOTO_API_ENDPOINT = 'https://api.siputzx.my.id/api/m/ephoto360';
         const GPT_IMAGE_API = 'https://ikyyzyyrestapi.my.id/ai/gptimage';
         const NEWS_API = 'https://ikyyzyyrestapi.my.id/berita/google-news';
@@ -39,6 +45,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const sidebar = document.getElementById('sidebar');
         const sidebarOverlay = document.getElementById('sidebar-overlay');
         const appWrapper = document.getElementById('app-wrapper');
+        const aiSelector = document.getElementById('ai-selector');
 
         let sessionsData = {};
         let isAwaitingResponse = false;
@@ -256,14 +263,34 @@ Gaya Bahasa: Santai, gunakan "gw", "lu", "bre". Jangan terlalu kaku.`
             
             try {
                 const sysContent = activeSession[0].content;
-                const finalUrl = `${API_ENDPOINT}?prompt=${encodeURIComponent(userText)}&system=${encodeURIComponent(sysContent)}&temperature=0.7`;
+                const selectedAI = aiSelector.value;
+                let finalUrl = "";
+
+                if (selectedAI === "synapse") {
+                finalUrl = `${AI_ENDPOINTS.synapse}?prompt=${encodeURIComponent(userText)}&system=${encodeURIComponent(sysContent)}&temperature=0.7`;
+                }
+                else if (selectedAI === "chatgpt") {
+                finalUrl = `${AI_ENDPOINTS.chatgpt}?prompt=${encodeURIComponent(userText)}`;
+                }
+                else if (selectedAI === "cici") {
+                finalUrl = `${AI_ENDPOINTS.cici}?prompt=${encodeURIComponent(userText)}`;
+                }
+                else if (selectedAI === "gemini") {
+                finalUrl = `${AI_ENDPOINTS.gemini}?message=${encodeURIComponent(userText)}`;
+                }
 
                 const response = await fetch(finalUrl);
                 if(typingIndicator) typingIndicator.remove();
                 if (!response.ok) throw new Error(`HTTP ${response.status}`);
 
                 const data = await response.json();
-                let aiFullText = data.data?.response || data.data || "Gagal memuat respon.";
+                let aiFullText =
+                data.data?.response ||
+                data.response ||
+                data.result?.reply ||
+                data.result ||
+                data.data ||
+                "Gagal memuat respon.";
                 
                 // DETEKSI LOGIKA EXECUTION
                 if (aiFullText.toLowerCase().includes("/exec") || aiFullText.toLowerCase().includes("weather:")) {
