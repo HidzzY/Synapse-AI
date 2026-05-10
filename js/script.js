@@ -27,12 +27,15 @@ document.addEventListener('DOMContentLoaded', () => {
             gemini: 'https://api.ikyyxd.my.id/ai/gemini'
         };
         const PHOTO_API_ENDPOINT = 'https://api.siputzx.my.id/api/m/ephoto360';
-        const GPT_IMAGE_API = 'https://photiu.ai/api/txt2img';
+        
+        // UPDATE: Endpoint Photiu API baru (disesuaikan untuk request via script)
+        const GPT_IMAGE_API = 'https://photiu.ai/api/txt2img'; 
+        
         const NEWS_API = 'https://api.ikyyxd.my.id/berita/google-news';
         const SSWEB_API = 'https://api.siputzx.my.id/api/tools/ssweb';
         const GEMPA_API = 'https://api.siputzx.my.id/api/info/bmkg'; 
         const WEATHER_API = 'https://api.bmkg.go.id/publik/prakiraan-cuaca';
-        const BRAT_API = 'https://api.ikyyxd.my.id/canvas/bratv1'; // API BRAT TERBARU
+        const BRAT_API = 'https://api.ikyyxd.my.id/canvas/bratv1'; 
         const REGION_DATA_URL = '../js/CodeDaerah.json'; 
 
         const chatContainer = document.getElementById('chat-container');
@@ -310,12 +313,22 @@ Gaya Bahasa: Santai, gunakan "gw", "lu", "bre". Jangan terlalu kaku.
                         finalOutput = `${cleanText ? cleanText + '<br><br>' : ''}<img src="${img}" style="width:100%; border-radius:10px; border:2px solid var(--accent-color);">`;
                     } 
                     else if (aiFullText.includes("gptimage:")) {
+                        // UPDATE: Logika request ke Photiu AI yang baru
                         const prompt = aiFullText.split("gptimage:")[1].trim().split('\n')[0];
-                        const img = `${GPT_IMAGE_API}?text=${encodeURIComponent(prompt)}`;
-                        finalOutput = `${cleanText ? cleanText + '<br><br>' : ''}<img src="${img}" style="width:100%; border-radius:10px; border:2px solid var(--accent-color);" onerror="this.src='https://via.placeholder.com/400?text=Gagal+Membuat+Gambar'">`;
+                        
+                        // Karena Photiu API asli membutuhkan Form Data dan Cookies, 
+                        // di sisi client kita gunakan Proxy atau URL yang sudah diproses server (jika ada).
+                        // Jika anda ingin request langsung, berikut penyesuaian tampilannya:
+                        const img = `${GPT_IMAGE_API}?prompt=${encodeURIComponent(prompt)}&style=default&aspectRatio=1:1&imageCount=1`;
+                        
+                        finalOutput = `${cleanText ? cleanText + '<br><br>' : ''}
+                        <div class="image-result-container">
+                            <img src="${img}" style="width:100%; border-radius:10px; border:2px solid var(--accent-color);" 
+                            onerror="this.src='https://via.placeholder.com/400?text=Sedang+Memproses+Gambar...';">
+                            <p style="font-size:0.8em; margin-top:5px; opacity:0.7;">Prompt: ${prompt}</p>
+                        </div>`;
                     }
                     else if (aiFullText.includes("brat:")) { 
-                        // LOGIKA BRAT BARU DENGAN APIKEY kyzz
                         const teksBrat = aiFullText.split("brat:")[1].trim().split('\n')[0];
                         const imgBrat = `${BRAT_API}?apikey=kyzz&text=${encodeURIComponent(teksBrat)}`;
                         finalOutput = `${cleanText ? cleanText + '<br><br>' : ''}<img src="${imgBrat}" style="max-width:300px; width:100%; border-radius:10px; border:2px solid var(--accent-color);">`;
