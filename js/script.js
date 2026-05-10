@@ -45,14 +45,14 @@ document.addEventListener('DOMContentLoaded', () => {
         const sidebarOverlay = document.getElementById('sidebar-overlay');
         const appWrapper = document.getElementById('app-wrapper');
         const aiSelector = document.getElementById('ai-selector');
+        // Inisialisasi input file (pastikan ID di HTML adalah 'file-input')
+        const fileInput = document.getElementById('file-input');
 
         let sessionsData = {};
         let isAwaitingResponse = false;
         let regionContext = "";
 
         // --- FITUR BARU: UPSCALE LOGIC ---
-        // Catatan: Karena upscale menggunakan axios/form-data di sisi client browser, 
-        // pastikan library tersebut tersedia via CDN di HTML lu.
         const upscaleImage = async (imageUrl) => {
             try {
                 const response = await fetch(`https://api.siputzx.my.id/api/tools/upscale?url=${encodeURIComponent(imageUrl)}`);
@@ -198,9 +198,10 @@ Selalu gunakan Bahasa Indonesia yang natural dan santai.`
             contentDiv.className = 'message-content';
             
             if (message.role === 'user') {
-                contentDiv.textContent = message.content;
+                // Gunakan innerHTML agar tag <img> dari preview gambar user bisa tampil
+                contentDiv.innerHTML = message.content;
             } else {
-                if (message.content.trim().startsWith('<div')) {
+                if (message.content.trim().startsWith('<div') || message.content.includes('<img')) {
                     contentDiv.innerHTML = message.content;
                 } else {
                     contentDiv.innerHTML = typeof marked !== 'undefined' ? marked.parse(message.content) : message.content;
@@ -218,7 +219,9 @@ Selalu gunakan Bahasa Indonesia yang natural dan santai.`
             sessionList.innerHTML = '';
             Object.keys(sessionsData.sessions).sort((a,b) => b.split('-')[1] - a.split('-')[1]).forEach(id => {
                 const firstUserMessage = sessionsData.sessions[id].find(msg => msg.role === 'user');
-                const title = firstUserMessage ? firstUserMessage.content.substring(0, 25) + '...' : 'Chat Baru';
+                // Clean title dari HTML tag (seperti img)
+                const titleText = firstUserMessage ? firstUserMessage.content.replace(/<[^>]*>/g, '') : 'Chat Baru';
+                const title = titleText.substring(0, 25) + '...';
                 const item = document.createElement('div');
                 item.className = `session-item ${id === sessionsData.activeSessionId ? 'active' : ''}`;
                 item.innerHTML = `<span class="session-item-title">${title}</span><button class="session-item-delete-btn"><i class="fa-solid fa-trash-can"></i></button>`;
@@ -256,15 +259,48 @@ Selalu gunakan Bahasa Indonesia yang natural dan santai.`
         
         const handleSendMessage = async () => {
             const userText = messageInput.value.trim();
-            if (!userText || isAwaitingResponse) return;
+            const file = fileInput ? fileInput.files[0] : null;
+
+            if ((!userText && !file) || isAwaitingResponse) return;
             isAwaitingResponse = true;
 
             const activeSession = sessionsData.sessions[sessionsData.activeSessionId];
-            activeSession.push({ role: 'user', content: userText });
-            appendMessage({ role: 'user', content: userText });
+            let finalPrompt = userText;
+            let displayMessage = userText;
+
+            // --- PROSES UPLOAD GAMBAR JIKA ADA ---
+            if (file) {
+                const uploadIndicator = appendMessage({ role: 'assistant', content: 'Sabar Bre, lagi upload gambar...' });
+                try {
+                    const formData = new FormData();
+                    formData.append('file', file);
+                    const uploadRes = await fetch('https://api.siputzx.my.id/api/tools/upload', {
+                        method: 'POST',
+                        body: formData
+                    });
+                    const uploadData = await uploadRes.json();
+                    
+                    if (uploadData.status) {
+                        const imgUrl = uploadData.url;
+                        // Gabungkan teks dan URL gambar agar AI bisa memproses
+                        finalPrompt = userText ? `${userText} ${imgUrl}` : `upscale: ${imgUrl}`;
+                        displayMessage = `${userText ? userText + '<br>' : ''}<img src="${imgUrl}" style="max-width:200px; border-radius:8px;">`;
+                    }
+                    uploadIndicator.remove();
+                } catch (err) {
+                    uploadIndicator.innerHTML = "Gagal upload gambar Bre.";
+                    isAwaitingResponse = false;
+                    return;
+                }
+            }
+
+            activeSession.push({ role: 'user', content: finalPrompt });
+            appendMessage({ role: 'user', content: displayMessage });
             
             saveSessions();
             messageInput.value = '';
+            if(fileInput) fileInput.value = ''; // Reset input file
+            if(window.clearPreview) window.clearPreview(); // Panggil fungsi clear preview di HTML jika ada
             messageInput.style.height = 'auto';
 
             const typingIndicator = document.createElement('div');
@@ -278,14 +314,15 @@ Selalu gunakan Bahasa Indonesia yang natural dan santai.`
                 const selectedAI = aiSelector.value;
                 let finalUrl = "";
 
+                // Sesuaikan parameter URL berdasarkan AI yang dipilih
                 if (selectedAI === "synapse") {
-                    finalUrl = `${AI_ENDPOINTS.synapse}?prompt=${encodeURIComponent(userText)}&system=${encodeURIComponent(sysContent)}&temperature=0.7`;
+                    finalUrl = `${AI_ENDPOINTS.synapse}?prompt=${encodeURIComponent(finalPrompt)}&system=${encodeURIComponent(sysContent)}&temperature=0.7`;
                 } else if (selectedAI === "chatgpt") {
-                    finalUrl = `${AI_ENDPOINTS.chatgpt}?prompt=${encodeURIComponent(userText)}`;
+                    finalUrl = `${AI_ENDPOINTS.chatgpt}?prompt=${encodeURIComponent(finalPrompt)}`;
                 } else if (selectedAI === "cici") {
-                    finalUrl = `${AI_ENDPOINTS.cici}?prompt=${encodeURIComponent(userText)}`;
+                    finalUrl = `${AI_ENDPOINTS.cici}?prompt=${encodeURIComponent(finalPrompt)}`;
                 } else if (selectedAI === "gemini") {
-                    finalUrl = `${AI_ENDPOINTS.gemini}?message=${encodeURIComponent(userText)}`;
+                    finalUrl = `${AI_ENDPOINTS.gemini}?message=${encodeURIComponent(finalPrompt)}`;
                 }
 
                 const response = await fetch(finalUrl);
@@ -377,8 +414,8 @@ Selalu gunakan Bahasa Indonesia yang natural dan santai.`
             }
         };
 
-        newChatBtn.onclick = createNewSession;
         sendButton.onclick = handleSendMessage;
+        newChatBtn.onclick = createNewSession;
         messageInput.addEventListener('input', () => {
             messageInput.style.height = 'auto';
             messageInput.style.height = `${Math.min(messageInput.scrollHeight, 200)}px`;
