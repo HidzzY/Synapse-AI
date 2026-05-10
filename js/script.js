@@ -28,8 +28,8 @@ document.addEventListener('DOMContentLoaded', () => {
         };
         const PHOTO_API_ENDPOINT = 'https://api.siputzx.my.id/api/m/ephoto360';
         
-        // UPDATE: Endpoint Photiu API baru (disesuaikan untuk request via script)
-        const GPT_IMAGE_API = 'https://photiu.ai/api/txt2img'; 
+        // UPDATE: Menggunakan Pollinations API agar request gambar via client lancar
+        const GPT_IMAGE_API = 'https://image.pollinations.ai/prompt/'; 
         
         const NEWS_API = 'https://api.ikyyxd.my.id/berita/google-news';
         const SSWEB_API = 'https://api.siputzx.my.id/api/tools/ssweb';
@@ -313,18 +313,15 @@ Gaya Bahasa: Santai, gunakan "gw", "lu", "bre". Jangan terlalu kaku.
                         finalOutput = `${cleanText ? cleanText + '<br><br>' : ''}<img src="${img}" style="width:100%; border-radius:10px; border:2px solid var(--accent-color);">`;
                     } 
                     else if (aiFullText.includes("gptimage:")) {
-                        // UPDATE: Logika request ke Photiu AI yang baru
+                        // FIX: Logika pembuatan gambar menggunakan Pollinations agar langsung tampil
                         const prompt = aiFullText.split("gptimage:")[1].trim().split('\n')[0];
-                        
-                        // Karena Photiu API asli membutuhkan Form Data dan Cookies, 
-                        // di sisi client kita gunakan Proxy atau URL yang sudah diproses server (jika ada).
-                        // Jika anda ingin request langsung, berikut penyesuaian tampilannya:
-                        const img = `${GPT_IMAGE_API}?prompt=${encodeURIComponent(prompt)}&style=default&aspectRatio=1:1&imageCount=1`;
+                        const randomSeed = Math.floor(Math.random() * 1000);
+                        const img = `${GPT_IMAGE_API}${encodeURIComponent(prompt)}?width=1024&height=1024&seed=${randomSeed}&nologo=true`;
                         
                         finalOutput = `${cleanText ? cleanText + '<br><br>' : ''}
                         <div class="image-result-container">
                             <img src="${img}" style="width:100%; border-radius:10px; border:2px solid var(--accent-color);" 
-                            onerror="this.src='https://via.placeholder.com/400?text=Sedang+Memproses+Gambar...';">
+                            onload="this.style.opacity=1" style="opacity:0; transition: opacity 0.5s ease-in-out;">
                             <p style="font-size:0.8em; margin-top:5px; opacity:0.7;">Prompt: ${prompt}</p>
                         </div>`;
                     }
