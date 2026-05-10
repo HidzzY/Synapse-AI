@@ -19,6 +19,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- LOGIKA KHUSUS HALAMAN CHAT ---
     if (document.getElementById('app-wrapper')) {
         const SESSION_LIMIT = 10000;
+        const API_ENDPOINT = 'https://api.siputzx.my.id/api/ai/glm47flash';
         const AI_ENDPOINTS = {
             synapse: 'https://api.siputzx.my.id/api/ai/glm47flash',
             chatgpt: 'https://api.ikyyxd.my.id/ai/chatgpt',
@@ -26,7 +27,10 @@ document.addEventListener('DOMContentLoaded', () => {
             gemini: 'https://api.ikyyxd.my.id/ai/gemini'
         };
         const PHOTO_API_ENDPOINT = 'https://api.siputzx.my.id/api/m/ephoto360';
+        
+        // UPDATE: Menggunakan Pollinations API agar request gambar via client lancar
         const GPT_IMAGE_API = 'https://image.pollinations.ai/prompt/'; 
+        
         const NEWS_API = 'https://api.ikyyxd.my.id/berita/google-news';
         const SSWEB_API = 'https://api.siputzx.my.id/api/tools/ssweb';
         const GEMPA_API = 'https://api.siputzx.my.id/api/info/bmkg'; 
@@ -45,24 +49,10 @@ document.addEventListener('DOMContentLoaded', () => {
         const sidebarOverlay = document.getElementById('sidebar-overlay');
         const appWrapper = document.getElementById('app-wrapper');
         const aiSelector = document.getElementById('ai-selector');
-        // Inisialisasi input file (pastikan ID di HTML adalah 'file-input')
-        const fileInput = document.getElementById('file-input');
 
         let sessionsData = {};
         let isAwaitingResponse = false;
         let regionContext = "";
-
-        // --- FITUR BARU: UPSCALE LOGIC ---
-        const upscaleImage = async (imageUrl) => {
-            try {
-                const response = await fetch(`https://api.siputzx.my.id/api/tools/upscale?url=${encodeURIComponent(imageUrl)}`);
-                const data = await response.json();
-                return data.status ? data.url : null;
-            } catch (e) {
-                console.error("Upscale error:", e);
-                return null;
-            }
-        };
 
         const loadRegionData = async () => {
             try {
@@ -95,19 +85,24 @@ Jika user meminta fitur ini, kamu WAJIB menjawab HANYA dengan format /exec diiku
 6. Gempa: /exec gempa:bmkg
 7. Cuaca: /exec weather: [KODE_ADM4]
 8. Brat: /exec brat: [TEKS]
-9. Upscale: /exec upscale: [URL_GAMBAR]
-
-[Instruksi Upscale]
-Jika user mengirim gambar dan minta "upscale", "perjelas", atau "hd-in", ambil URL gambarnya dan jawab: /exec upscale: [URL].
 
 [Referensi Kode Wilayah (Nama: Kode)]
 ${regionContext || "Data wilayah sedang dimuat..."}
+
+[Prosedur Cuaca]
+1. Jika user tanya cuaca di lokasi yang ada di daftar referensi, cari kode ADM4 yang sesuai.
+2. WAJIB balas HANYA dengan format: /exec weather: [KODE].
+3. Gunakan titik pada kode wilayah sesuai referensi.
+4. Jika lokasi TIDAK ada di daftar, minta maaf dengan santai.
 
 [Kepribadian]
 Gaya Bahasa: Santai, gunakan "gw", "lu", "bre". Jangan terlalu kaku.
 
 [Bahasa]
-Selalu gunakan Bahasa Indonesia yang natural dan santai.`
+1. Selalu gunakan Bahasa Indonesia dalam semua jawaban sebagai bahasa utama.
+2. Jangan gunakan bahasa Inggris kecuali user secara eksplisit meminta bahasa Inggris, translate, atau istilah teknis tertentu.
+3. Jika user menggunakan bahasa campuran, tetap prioritaskan Bahasa Indonesia.
+4. Gunakan bahasa yang natural, santai, mudah dipahami, dan tidak terlalu formal.`
         });
 
         const saveSessions = () => localStorage.setItem('synapseVedaSessions', JSON.stringify(sessionsData));
@@ -192,16 +187,17 @@ Selalu gunakan Bahasa Indonesia yang natural dan santai.`
 
         const appendMessage = (message) => {
             if (message.role === 'system') return;
+            
             const messageWrapper = document.createElement('div');
             messageWrapper.className = `message ${message.role}`;
+            
             const contentDiv = document.createElement('div');
             contentDiv.className = 'message-content';
             
             if (message.role === 'user') {
-                // Gunakan innerHTML agar tag <img> dari preview gambar user bisa tampil
-                contentDiv.innerHTML = message.content;
+                contentDiv.textContent = message.content;
             } else {
-                if (message.content.trim().startsWith('<div') || message.content.includes('<img')) {
+                if (message.content.trim().startsWith('<div')) {
                     contentDiv.innerHTML = message.content;
                 } else {
                     contentDiv.innerHTML = typeof marked !== 'undefined' ? marked.parse(message.content) : message.content;
@@ -219,9 +215,7 @@ Selalu gunakan Bahasa Indonesia yang natural dan santai.`
             sessionList.innerHTML = '';
             Object.keys(sessionsData.sessions).sort((a,b) => b.split('-')[1] - a.split('-')[1]).forEach(id => {
                 const firstUserMessage = sessionsData.sessions[id].find(msg => msg.role === 'user');
-                // Clean title dari HTML tag (seperti img)
-                const titleText = firstUserMessage ? firstUserMessage.content.replace(/<[^>]*>/g, '') : 'Chat Baru';
-                const title = titleText.substring(0, 25) + '...';
+                const title = firstUserMessage ? firstUserMessage.content.substring(0, 25) + '...' : 'Chat Baru';
                 const item = document.createElement('div');
                 item.className = `session-item ${id === sessionsData.activeSessionId ? 'active' : ''}`;
                 item.innerHTML = `<span class="session-item-title">${title}</span><button class="session-item-delete-btn"><i class="fa-solid fa-trash-can"></i></button>`;
@@ -259,48 +253,15 @@ Selalu gunakan Bahasa Indonesia yang natural dan santai.`
         
         const handleSendMessage = async () => {
             const userText = messageInput.value.trim();
-            const file = fileInput ? fileInput.files[0] : null;
-
-            if ((!userText && !file) || isAwaitingResponse) return;
+            if (!userText || isAwaitingResponse) return;
             isAwaitingResponse = true;
 
             const activeSession = sessionsData.sessions[sessionsData.activeSessionId];
-            let finalPrompt = userText;
-            let displayMessage = userText;
-
-            // --- PROSES UPLOAD GAMBAR JIKA ADA ---
-            if (file) {
-                const uploadIndicator = appendMessage({ role: 'assistant', content: 'Sabar Bre, lagi upload gambar...' });
-                try {
-                    const formData = new FormData();
-                    formData.append('file', file);
-                    const uploadRes = await fetch('https://api.siputzx.my.id/api/tools/upload', {
-                        method: 'POST',
-                        body: formData
-                    });
-                    const uploadData = await uploadRes.json();
-                    
-                    if (uploadData.status) {
-                        const imgUrl = uploadData.url;
-                        // Gabungkan teks dan URL gambar agar AI bisa memproses
-                        finalPrompt = userText ? `${userText} ${imgUrl}` : `upscale: ${imgUrl}`;
-                        displayMessage = `${userText ? userText + '<br>' : ''}<img src="${imgUrl}" style="max-width:200px; border-radius:8px;">`;
-                    }
-                    uploadIndicator.remove();
-                } catch (err) {
-                    uploadIndicator.innerHTML = "Gagal upload gambar Bre.";
-                    isAwaitingResponse = false;
-                    return;
-                }
-            }
-
-            activeSession.push({ role: 'user', content: finalPrompt });
-            appendMessage({ role: 'user', content: displayMessage });
+            activeSession.push({ role: 'user', content: userText });
+            appendMessage({ role: 'user', content: userText });
             
             saveSessions();
             messageInput.value = '';
-            if(fileInput) fileInput.value = ''; // Reset input file
-            if(window.clearPreview) window.clearPreview(); // Panggil fungsi clear preview di HTML jika ada
             messageInput.style.height = 'auto';
 
             const typingIndicator = document.createElement('div');
@@ -314,15 +275,17 @@ Selalu gunakan Bahasa Indonesia yang natural dan santai.`
                 const selectedAI = aiSelector.value;
                 let finalUrl = "";
 
-                // Sesuaikan parameter URL berdasarkan AI yang dipilih
                 if (selectedAI === "synapse") {
-                    finalUrl = `${AI_ENDPOINTS.synapse}?prompt=${encodeURIComponent(finalPrompt)}&system=${encodeURIComponent(sysContent)}&temperature=0.7`;
-                } else if (selectedAI === "chatgpt") {
-                    finalUrl = `${AI_ENDPOINTS.chatgpt}?prompt=${encodeURIComponent(finalPrompt)}`;
-                } else if (selectedAI === "cici") {
-                    finalUrl = `${AI_ENDPOINTS.cici}?prompt=${encodeURIComponent(finalPrompt)}`;
-                } else if (selectedAI === "gemini") {
-                    finalUrl = `${AI_ENDPOINTS.gemini}?message=${encodeURIComponent(finalPrompt)}`;
+                finalUrl = `${AI_ENDPOINTS.synapse}?prompt=${encodeURIComponent(userText)}&system=${encodeURIComponent(sysContent)}&temperature=0.7`;
+                }
+                else if (selectedAI === "chatgpt") {
+                finalUrl = `${AI_ENDPOINTS.chatgpt}?prompt=${encodeURIComponent(userText)}`;
+                }
+                else if (selectedAI === "cici") {
+                finalUrl = `${AI_ENDPOINTS.cici}?prompt=${encodeURIComponent(userText)}`;
+                }
+                else if (selectedAI === "gemini") {
+                finalUrl = `${AI_ENDPOINTS.gemini}?message=${encodeURIComponent(userText)}`;
                 }
 
                 const response = await fetch(finalUrl);
@@ -330,33 +293,37 @@ Selalu gunakan Bahasa Indonesia yang natural dan santai.`
                 if (!response.ok) throw new Error(`HTTP ${response.status}`);
 
                 const data = await response.json();
-                let aiFullText = data.data?.response || data.response || data.result?.reply || data.result || data.data || "Gagal memuat respon.";
+                let aiFullText =
+                data.data?.response ||
+                data.response ||
+                data.result?.reply ||
+                data.result ||
+                data.data ||
+                "Gagal memuat respon.";
                 
                 // DETEKSI LOGIKA EXECUTION
-                if (aiFullText.toLowerCase().includes("/exec")) {
+                if (aiFullText.toLowerCase().includes("/exec") || aiFullText.toLowerCase().includes("weather:")) {
                     let finalOutput = "";
-                    let cleanText = aiFullText.split(/\/exec/i)[0].trim();
+                    let cleanText = aiFullText.split(/\/exec/i)[0].replace(/\[EXEC\]/gi, '').split("weather:")[0].trim();
 
-                    if (aiFullText.includes("upscale:")) {
-                        const targetUrl = aiFullText.split("upscale:")[1].trim().split('\n')[0];
-                        const resUpscale = await upscaleImage(targetUrl);
-                        if(resUpscale) {
-                            finalOutput = `${cleanText ? cleanText + '<br><br>' : ''}Nih Bre, gambarnya udah gw bikin HD:<br><img src="${resUpscale}" style="width:100%; border-radius:10px; border:2px solid var(--accent-color);">`;
-                        } else {
-                            finalOutput = "Maaf Bre, gagal upscale gambarnya. Coba lagi nanti.";
-                        }
-                    }
-                    else if (aiFullText.includes("ephoto360:")) {
+                    if (aiFullText.includes("ephoto360:")) {
                         const name = aiFullText.split("ephoto360:")[1].trim().split('\n')[0];
                         const effectUrl = "https://en.ephoto360.com/create-a-cartoon-style-graffiti-text-effect-online-668.html";
                         const img = `${PHOTO_API_ENDPOINT}?url=${encodeURIComponent(effectUrl)}&text1=${encodeURIComponent(name)}`;
                         finalOutput = `${cleanText ? cleanText + '<br><br>' : ''}<img src="${img}" style="width:100%; border-radius:10px; border:2px solid var(--accent-color);">`;
                     } 
                     else if (aiFullText.includes("gptimage:")) {
+                        // FIX: Logika pembuatan gambar menggunakan Pollinations agar langsung tampil
                         const prompt = aiFullText.split("gptimage:")[1].trim().split('\n')[0];
                         const randomSeed = Math.floor(Math.random() * 1000);
                         const img = `${GPT_IMAGE_API}${encodeURIComponent(prompt)}?width=1024&height=1024&seed=${randomSeed}&nologo=true`;
-                        finalOutput = `${cleanText ? cleanText + '<br><br>' : ''}<img src="${img}" style="width:100%; border-radius:10px; border:2px solid var(--accent-color);">`;
+                        
+                        finalOutput = `${cleanText ? cleanText + '<br><br>' : ''}
+                        <div class="image-result-container">
+                            <img src="${img}" style="width:100%; border-radius:10px; border:2px solid var(--accent-color);" 
+                            onload="this.style.opacity=1" style="opacity:0; transition: opacity 0.5s ease-in-out;">
+                            <p style="font-size:0.8em; margin-top:5px; opacity:0.7;">Prompt: ${prompt}</p>
+                        </div>`;
                     }
                     else if (aiFullText.includes("brat:")) { 
                         const teksBrat = aiFullText.split("brat:")[1].trim().split('\n')[0];
@@ -367,31 +334,86 @@ Selalu gunakan Bahasa Indonesia yang natural dan santai.`
                         const nRes = await fetch(NEWS_API);
                         const nData = await nRes.json();
                         if(nData.status) {
-                            let newsList = nData.result.slice(0, 5).map(n => `<li><a href="${n.link}" style="color:var(--accent-color); font-weight:bold;">${n.title}</a></li>`).join('');
-                            finalOutput = `${cleanText ? cleanText + '<br><br>' : ''}<ul>${newsList}</ul>`;
+                            let newsList = nData.result.slice(0, 5).map(n => `<li><a href="${n.link}" style="color:var(--accent-color); font-weight:bold;">${n.title}</a><br><small>Sumber: ${n.source}</small></li>`).join('');
+                            finalOutput = `${cleanText ? cleanText + '<br><br>' : ''}<ul style="padding-left:20px; line-height:1.6;">${newsList}</ul>`;
                         }
                     }
                     else if (aiFullText.includes("ssweb:")) {
                         const urlTarget = aiFullText.split("ssweb:")[1].trim().split('\n')[0];
-                        const ssImg = `${SSWEB_API}?url=${encodeURIComponent(urlTarget)}&device=desktop&theme=dark`;
+                        const ssImg = `${SSWEB_API}?url=${encodeURIComponent(urlTarget)}&device=desktop&theme=dark&fullPage=false`;
                         finalOutput = `${cleanText ? cleanText + '<br><br>' : ''}<img src="${ssImg}" style="width:100%; border-radius:10px; border:2px solid var(--accent-color);">`;
+                    }
+                    else if (aiFullText.includes("stalk:")) {
+                        const stalkParts = aiFullText.split("stalk:")[1].trim().split(":");
+                        const platform = stalkParts[0].trim().toLowerCase();
+                        const username = stalkParts[1].trim().replace(/[?.!\n]/g, '').split(' ')[0];
+                        let stalkUrl = platform === 'tiktok' ? `https://api.siputzx.my.id/api/stalk/tiktok?username=${username}` : 
+                                       platform === 'instagram' ? `https://ikyyzyyrestapi.my.id/stalk/igv2?username=${username}` : 
+                                       `https://api.siputzx.my.id/api/stalk/github?user=${username}`;
+
+                        const sRes = await fetch(stalkUrl);
+                        const sData = await sRes.json();
+                        if(sData.status) {
+                            let profile = platform === 'instagram' ? sData.result : (sData.data.user || sData.data);
+                            let stats = platform === 'instagram' ? sData.result.stats : (sData.data.stats || sData.data);
+                            let pic = platform === 'instagram' ? profile.profile.images : (profile.avatarMedium || profile.profile_pic);
+                            finalOutput = `${cleanText ? cleanText + '<br><br>' : ''}
+                            <div style="background:var(--bg-secondary); padding:15px; border-radius:10px; border:1px solid var(--accent-color);">
+                                <img src="${pic}" style="width:80px; height:80px; border-radius:50%; border:2px solid var(--accent-color);">
+                                <div style="font-weight:bold;">${profile.nickname || profile.full_name || username}</div>
+                                <div style="font-size:0.85em;">Followers: ${stats.followers || stats.followerCount}</div>
+                            </div>`;
+                        }
                     }
                     else if (aiFullText.includes("gempa:bmkg")) {
                         const gRes = await fetch(GEMPA_API);
                         const gData = await gRes.json();
                         if(gData.status && gData.data.auto) {
                             const g = gData.data.auto.Infogempa.gempa;
-                            finalOutput = `${cleanText ? cleanText + '<br><br>' : ''}<div style="background:var(--bg-secondary); padding:15px; border-radius:10px; border:1px solid var(--accent-color);"><b>⚠️ INFO GEMPA</b><br>Wilayah: ${g.Wilayah}<br>Mag: ${g.Magnitude}<br>Potensi: ${g.Potensi}</div>`;
+                            finalOutput = `${cleanText ? cleanText + '<br><br>' : ''}
+                            <div style="background:var(--bg-secondary); padding:15px; border-radius:10px; border:1px solid var(--accent-color); text-align:left;">
+                                <div style="font-weight:bold; color:#ff4d4d; margin-bottom:5px;">⚠️ INFO GEMPA TERKINI</div>
+                                <div style="font-size:0.9em;">
+                                    📅 <b>Tanggal:</b> ${g.Tanggal}<br>
+                                    ⌚ <b>Jam:</b> ${g.Jam}<br>
+                                    📍 <b>Wilayah:</b> ${g.Wilayah}<br>
+                                    📏 <b>Magnitudo:</b> ${g.Magnitude} SR<br>
+                                    🌊 <b>Kedalaman:</b> ${g.Kedalaman}<br>
+                                    📢 <b>Potensi:</b> ${g.Potensi}
+                                </div>
+                                <img src="${g.downloadShakemap}" style="width:100%; border-radius:8px; margin-top:10px;">
+                            </div>`;
                         }
                     }
                     else if (aiFullText.includes("weather:")) {
-                        const adm4 = aiFullText.split("weather:")[1].trim().split(' ')[0];
-                        const wRes = await fetch(`${WEATHER_API}?adm4=${adm4}`);
-                        const wData = await wRes.json();
-                        if(wData.data) {
-                            const cur = wData.data[0].cuaca[0][0];
-                            finalOutput = `${cleanText ? cleanText + '<br><br>' : ''}<div style="background:var(--bg-secondary); padding:15px; border-radius:10px;">Cuaca di ${wData.data[0].lokasi.desa}: ${cur.weather_desc} (${cur.t}°C)</div>`;
-                        }
+                        let rawCode = aiFullText.split("weather:")[1].trim();
+                        const adm4 = rawCode.replace(/[?!\n]/g, '').split(' ')[0];
+                        try {
+                            const wRes = await fetch(`${WEATHER_API}?adm4=${adm4}`);
+                            if (!wRes.ok) throw new Error(`BMKG Error: ${wRes.status}`);
+                            const wData = await wRes.json();
+                            if (wData.data && wData.data.length > 0) {
+                                const location = wData.data[0].lokasi;
+                                const cur = wData.data[0].cuaca[0][0];
+                                const weatherIcon = cur.image; 
+                                finalOutput = `${cleanText ? cleanText + '<br><br>' : ''}
+                                <div style="background:linear-gradient(135deg, #1e1e2f, #111); padding:20px; border-radius:15px; border:1px solid var(--accent-color); color:white;">
+                                    <div style="font-size:1.1em; font-weight:bold; color:var(--accent-color);"><i class="fa-solid fa-location-dot"></i> ${location.desa}</div>
+                                    <div style="display:flex; align-items:center; margin:15px 0;">
+                                        <img src="${weatherIcon}" style="width:70px; height:70px;">
+                                        <div style="margin-left:15px;">
+                                            <div style="font-size:3em; font-weight:bold; line-height:1;">${cur.t}°C</div>
+                                            <div style="font-size:1em; font-weight:500; color:var(--accent-color);">${cur.weather_desc}</div>
+                                        </div>
+                                    </div>
+                                    <div style="display:grid; grid-template-columns: repeat(3, 1fr); gap:10px; border-top: 1px solid rgba(255,255,255,0.1); padding-top:15px;">
+                                        <div style="text-align:center;"><div style="font-size:0.7em; opacity:0.6;">Lembap</div><div>${cur.hu}%</div></div>
+                                        <div style="text-align:center;"><div style="font-size:0.7em; opacity:0.6;">Angin</div><div>${cur.ws} km/j</div></div>
+                                        <div style="text-align:center;"><div style="font-size:0.7em; opacity:0.6;">Awan</div><div>${cur.tcc}%</div></div>
+                                    </div>
+                                </div>`;
+                            }
+                        } catch (err) { finalOutput = "Gagal mengambil data cuaca."; }
                     }
 
                     const messageDiv = appendMessage({ role: 'assistant', content: '' });
@@ -414,8 +436,8 @@ Selalu gunakan Bahasa Indonesia yang natural dan santai.`
             }
         };
 
-        sendButton.onclick = handleSendMessage;
         newChatBtn.onclick = createNewSession;
+        sendButton.onclick = handleSendMessage;
         messageInput.addEventListener('input', () => {
             messageInput.style.height = 'auto';
             messageInput.style.height = `${Math.min(messageInput.scrollHeight, 200)}px`;
