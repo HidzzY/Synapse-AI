@@ -28,12 +28,23 @@
             <div class="chat-layout">
                 <header class="chat-header">
                     <div class="header-left">
-    <button id="menu-toggle-btn" class="header-button" title="Menu"><i class="fa-solid fa-bars"></i></button>
-    <img src="../image/logo2.png" alt="Icon" class="header-logo"> 
-    <h2 id="chat-title">Synapse Veda</h2>
-</div>
+                        <button id="menu-toggle-btn" class="header-button" title="Menu">
+                            <i class="fa-solid fa-bars"></i>
+                        </button>
+                        <img src="../image/logo2.png" alt="Icon" class="header-logo"> 
+                        <h2 id="chat-title">Synapse Veda</h2>
+                    </div>
 
                     <div class="header-right">
+
+                        <!-- AI MODEL SELECTOR -->
+                        <select id="ai-selector" style="padding:8px 12px;border-radius:8px;border:none;outline:none;background:#222;color:white;margin-right:15px;">
+                            <option value="synapse">Synapse Default</option>
+                            <option value="chatgpt">ChatGPT</option>
+                            <option value="cici">Cici AI</option>
+                            <option value="gemini">Gemini</option>
+                        </select>
+
                         <div class="theme-switcher">
                             <i class="fa-solid fa-sun"></i>
                             <label class="switch">
@@ -52,9 +63,11 @@
                 <footer class="chat-input-area-wrapper">
                     <div class="chat-input-area">
                         <textarea id="message-input" placeholder="Ketik pesan Anda di sini..." rows="1"></textarea>
-                        <button id="send-button" title="Kirim Pesan"><i class="fa-solid fa-paper-plane"></i></button>
+                        <button id="send-button" title="Kirim Pesan">
+                            <i class="fa-solid fa-paper-plane"></i>
+                        </button>
                     </div>
-                    <p class="api-disclaimer" >Synapse adalah AI dan dapat melakukan kesalahan.</p>
+                    <p class="api-disclaimer">Synapse adalah AI dan dapat melakukan kesalahan.</p>
                 </footer>
             </div>
         </div>
